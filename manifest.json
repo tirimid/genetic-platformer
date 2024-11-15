@@ -1,0 +1,11 @@
+{
+	"manifest_version": 2,
+	"name": "Genetic Platformer",
+	"version": "1.0",
+	"description": "Make genetic algorithm platformer players complete courses",
+	"permissions": ["activeTab"],
+	"browser_action": {
+		"default_title": "Genetic Platformer",
+		"default_popup": "genetic-platformer.html"
+	}
+}

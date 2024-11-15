@@ -1,0 +1,21 @@
+body {
+	padding: 10px;
+	background-color: #e8e8e8;
+}
+
+h1 {
+	padding: 0px;
+	margin: 0px;
+	font-family: monospace;
+	font-size: 3ch;
+	font-weight: bold;
+}
+
+button {
+	font-family: monospace;
+	font-size: 2ch;
+}
+
+canvas {
+	border: 5px #000000 solid;
+}
