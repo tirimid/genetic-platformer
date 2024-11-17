@@ -50,14 +50,13 @@ const CoinDistanceFitness = 5000
 const GoalDistanceFitness = 12000
 const DeathFitness = -10000
 const GoalSpeedFitness = 2000
-const BaseNoneChance = 0.25
-const BaseLeftChance = 0.30
-const BaseRightChance = 0.30
-const BaseJumpChance = 0.15
-const ActionMutationRate = 0.05
-const MutationRamp = 0.8
+const NoneChance = 0.25
+const LeftChance = 0.30
+const RightChance = 0.30
+const JumpChance = 0.15
+const MutationRamp = 0.9
 
-// game state.
+// functional game state.
 var Mode = EditorMode.Eye
 var DragStartX = null
 var DragStartY = null
@@ -74,12 +73,15 @@ var CurPlayerMove = 0
 var Generation = 0
 var PopulationSize = 500
 var MutationChance = 0.01
-var BestFitness = 0
 var Boxes = []
 var Kills = []
 var Goals = []
 var Coins = []
 var Players = []
+
+// aesthetic game state.
+var LivePopulation = 0
+var BestFitness = 0
 
 class Box
 {
@@ -116,10 +118,6 @@ class Player
 		this.Grounded = false
 		this.Alive = true
 		this.Active = true
-		this.NoneChance = BaseNoneChance
-		this.LeftChance = BaseLeftChance
-		this.RightChance = BaseRightChance
-		this.JumpChance = BaseJumpChance
 
 		for (var i = 0; i < MovesPerGen; ++i)
 			this.Memory.push(RandomPlayerInput(this))
@@ -256,6 +254,8 @@ function BtnTrainAi()
 		for (var i = 0; i < PopulationSize; ++i)
 			Players.push(new Player(i, SpawnX, SpawnY))
 	}
+
+	LivePopulation = PopulationSize
 }
 
 function CurMutationRate()
@@ -350,8 +350,8 @@ function Draw()
 		Ctx.fillStyle = TextColor
 		Ctx.font = TextFont
 		Ctx.fillText("Mode: " + Mode, 10, 20)
-		Ctx.fillText("Population size: " + PopulationSize, 10, 40)
-		Ctx.fillText("Mutation chance: " + (MutationChance * 100) + "%", 10, 60)
+		Ctx.fillText("Population size: " + LivePopulation + "/" + PopulationSize, 10, 40)
+		Ctx.fillText("Mutation chance: " + (100 * MutationChance) + "%", 10, 60)
 		Ctx.fillText("Generation: " + Generation, 10, 80)
 		Ctx.fillText("Best fitness: " + Math.floor(BestFitness), 10, 100)
 	}
@@ -572,41 +572,6 @@ function MutatePlayer(Player)
 		if (Math.random() < MutRate)
 			Player.Memory[i] = RandomPlayerInput(Player)
 	}
-
-	// mutate action chances.
-	{
-		if (Player.ChanceNone > 0.0 && Math.random() < MutRate)
-		{
-			Player.ChanceNone += ActionMutationRate
-			Player.ChanceLeft -= ActionMutationRate / 3.0
-			Player.ChanceRight -= ActionMutationRate / 3.0
-			Player.ChanceJump -= ActionMutationRate / 3.0
-		}
-
-		if (Player.ChanceLeft > 0.0 && Math.random() < MutRate)
-		{
-			Player.ChanceNone -= ActionMutationRate / 3.0
-			Player.ChanceLeft += ActionMutationRate
-			Player.ChanceRight -= ActionMutationRate / 3.0
-			Player.ChanceJump -= ActionMutationRate / 3.0
-		}
-
-		if (Player.ChanceRight > 0.0 && Math.random() < MutRate)
-		{
-			Player.ChanceNone -= ActionMutationRate / 3.0
-			Player.ChanceLeft -= ActionMutationRate / 3.0
-			Player.ChanceRight += ActionMutationRate
-			Player.ChanceJump -= ActionMutationRate / 3.0
-		}
-
-		if (Player.ChanceJump > 0.0 && Math.random() < MutRate)
-		{
-			Player.ChanceNone -= ActionMutationRate / 3.0
-			Player.ChanceLeft -= ActionMutationRate / 3.0
-			Player.ChanceRight -= ActionMutationRate / 3.0
-			Player.ChanceJump += ActionMutationRate
-		}
-	}
 }
 
 function PropagatePlayers()
@@ -638,6 +603,8 @@ function PropagatePlayers()
 				Players[i].Memory.push(RandomPlayerInput(Players[i]))
 		}
 	}
+
+	LivePopulation = PopulationSize
 }
 
 function RandomPlayerInput(Player)
@@ -650,10 +617,10 @@ function RandomPlayerInput(Player)
 	]
 
 	const Weights = [
-		Player.NoneChance,
-		Player.LeftChance,
-		Player.RightChance,
-		Player.JumpChance
+		NoneChance,
+		LeftChance,
+		RightChance,
+		JumpChance
 	]
 
 	return WeightedRandom(PlayerInputs, Weights)
@@ -751,30 +718,35 @@ function UpdatePlayer(Player)
 		Player.Grounded = false
 		for (const Box of Boxes)
 		{
-			if (Player.PosY + PlayerHeight >= Box.y && Player.PosY <= Box.y + Box.h)
+			if (Player.PosY + PlayerHeight >= Box.y
+				&& Player.PosY <= Box.y + Box.h)
 			{
-				if (Player.PosX < Box.x && Player.PosX + PlayerWidth + Player.VelX > Box.x)
+				if (Player.PosX <= Box.x
+					&& Player.PosX + PlayerWidth + Player.VelX >= Box.x)
 				{
 					Player.PosX = Box.x - PlayerWidth - 0.5
 					Player.VelX = 0
-					Player.Grounded = true
 				}
-				else if (Player.PosX + PlayerWidth > Box.x + Box.w && Player.PosX + Player.VelX < Box.x + Box.w)
+				else if (Player.PosX + PlayerWidth >= Box.x + Box.w
+					&& Player.PosX + Player.VelX <= Box.x + Box.w)
 				{
 					Player.PosX = Box.x + Box.w + 0.5
 					Player.VelX = 0
 				}
 			}
 
-			if (Player.PosX + PlayerWidth >= Box.x && Player.PosX <= Box.x + Box.w)
+			if (Player.PosX + PlayerWidth >= Box.x
+				&& Player.PosX <= Box.x + Box.w)
 			{
-				if (Player.PosY < Box.y && Player.PosY + PlayerHeight + Player.VelY > Box.y)
+				if (Player.PosY <= Box.y
+					&& Player.PosY + PlayerHeight + Player.VelY >= Box.y)
 				{
 					Player.PosY = Box.y - PlayerHeight - 0.5
 					Player.VelY = 0
 					Player.Grounded = true
 				}
-				else if (Player.PosY + PlayerHeight > Box.y + Box.h && Player.PosY + Player.VelY < Box.y + Box.h)
+				else if (Player.PosY + PlayerHeight >= Box.y + Box.h
+					&& Player.PosY + Player.VelY <= Box.y + Box.h)
 				{
 					Player.PosY = Box.y + Box.h + 0.5
 					Player.VelY = 0
@@ -791,6 +763,7 @@ function UpdatePlayer(Player)
 			{
 				Player.Fitness += DeathFitness
 				Player.Alive = false
+				--LivePopulation
 				return
 			}
 		}
