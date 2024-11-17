@@ -461,6 +461,7 @@ function MouseClickEvent()
 
 			Boxes = Boxes.filter(RemnantBox)
 			Kills = Kills.filter(RemnantBox)
+			Goals = Goals.filter(RemnantBox)
 			Coins = Coins.filter(RemnantCoin)
 
 			break
