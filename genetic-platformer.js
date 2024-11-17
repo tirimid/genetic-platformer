@@ -194,7 +194,7 @@ function BtnSetMutationChance()
 	}
 
 	var Value = parseFloat(Input.value)
-	if (Value == NaN)
+	if (isNaN(Value))
 	{
 		Input.value = 100.0 * MutationChance
 		return
@@ -220,7 +220,7 @@ function BtnSetPopulationSize()
 	}
 
 	var Value = parseInt(Input.value, 10)
-	if (Value == NaN)
+	if (isNaN(Value))
 	{
 		Input.value = PopulationSize
 		return

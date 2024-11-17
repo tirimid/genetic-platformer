@@ -7,5 +7,9 @@
 	"browser_action": {
 		"default_title": "Genetic Platformer",
 		"default_popup": "genetic-platformer.html"
+	},
+	"icons": {
+		"48": "res/icon48.png",
+		"96": "res/icon96.png"
 	}
 }
